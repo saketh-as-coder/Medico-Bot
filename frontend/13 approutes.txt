@@ -1,0 +1,40 @@
+import React from "react";
+import {
+    BrowserRouter,
+    Routes,
+    Route,
+    Navigate
+} from "react-router-dom";
+
+import ApplicationDetailsPage
+    from "../pages/ApplicationDetailsPage";
+
+const AppRoutes = () => {
+
+    return (
+        <BrowserRouter>
+
+            <Routes>
+
+                <Route
+                    path="/applications/:customerId"
+                    element={<ApplicationDetailsPage />}
+                />
+
+                <Route
+                    path="*"
+                    element={
+                        <Navigate
+                            to="/applications/APP-B7C06194"
+                            replace
+                        />
+                    }
+                />
+
+            </Routes>
+
+        </BrowserRouter>
+    );
+};
+
+export default AppRoutes;

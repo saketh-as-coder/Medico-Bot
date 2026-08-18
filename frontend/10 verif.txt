@@ -1,0 +1,94 @@
+import React, { useState } from "react";
+
+const VerificationPanel = ({
+    applicationId,
+    initialScore,
+    initialStatus,
+    onRunBureauCheck
+}) => {
+
+    const [status, setStatus] = useState("NOT_RUN");
+    const [score, setScore] = useState(initialScore);
+    const [scoreStatus, setScoreStatus] = useState(initialStatus);
+
+    const handleBureauCheck = async () => {
+
+        setStatus("RUNNING");
+
+        try {
+
+            const result = await onRunBureauCheck(applicationId);
+
+            setScore(result.score);
+            setScoreStatus(result.status);
+
+            setStatus("COMPLETED");
+
+        } catch (error) {
+
+            console.error(error);
+            setStatus("FAILED");
+
+        }
+    };
+
+    return (
+        <section className="verification-card">
+
+            <h2>Verification</h2>
+
+            <div className="verification-content">
+
+                <div className="verification-score">
+
+                    <div className="shield-icon">
+                        ✓
+                    </div>
+
+                    <div>
+                        <span className="score-label">
+                            Score:
+                        </span>
+
+                        <strong>
+                            {score ?? "--"}
+                        </strong>
+
+                        <p className="score-status">
+                            {scoreStatus ?? "Not checked"}
+                        </p>
+                    </div>
+
+                </div>
+
+                <button
+                    className="bureau-button"
+                    onClick={handleBureauCheck}
+                    disabled={status === "RUNNING"}
+                >
+
+                    {status === "RUNNING"
+                        ? "Running Check..."
+                        : "Run Bureau Check"}
+
+                </button>
+
+                {status === "COMPLETED" && (
+                    <div className="verification-success">
+                        ✓ Bureau check completed successfully
+                    </div>
+                )}
+
+                {status === "FAILED" && (
+                    <div className="verification-error">
+                        Bureau check failed. Please try again.
+                    </div>
+                )}
+
+            </div>
+
+        </section>
+    );
+};
+
+export default VerificationPanel;

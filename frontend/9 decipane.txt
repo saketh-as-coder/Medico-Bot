@@ -1,0 +1,77 @@
+import React, { useState } from "react";
+import { DECISION_TYPES } from "../constants/applicationConstants";
+
+const DecisionPanel = ({ applicationId, onDecision }) => {
+
+    const [selectedDecision, setSelectedDecision] = useState(null);
+
+    const handleDecision = async (decision) => {
+
+        setSelectedDecision(decision);
+
+        if (onDecision) {
+            await onDecision(applicationId, decision);
+        }
+    };
+
+    return (
+        <section className="decision-card">
+
+            <h2>Decision</h2>
+
+            <p className="decision-description">
+                Review the application and documents carefully
+                before making a decision.
+            </p>
+
+            <div className="decision-buttons">
+
+                <button
+                    className={`decision-button accept ${
+                        selectedDecision === DECISION_TYPES.ACCEPT
+                            ? "selected"
+                            : ""
+                    }`}
+                    onClick={() =>
+                        handleDecision(DECISION_TYPES.ACCEPT)
+                    }
+                >
+                    <span>✓</span>
+                    Accept
+                </button>
+
+                <button
+                    className={`decision-button refer ${
+                        selectedDecision === DECISION_TYPES.REFER
+                            ? "selected"
+                            : ""
+                    }`}
+                    onClick={() =>
+                        handleDecision(DECISION_TYPES.REFER)
+                    }
+                >
+                    <span>↗</span>
+                    Refer
+                </button>
+
+                <button
+                    className={`decision-button reject ${
+                        selectedDecision === DECISION_TYPES.REJECT
+                            ? "selected"
+                            : ""
+                    }`}
+                    onClick={() =>
+                        handleDecision(DECISION_TYPES.REJECT)
+                    }
+                >
+                    <span>×</span>
+                    Reject
+                </button>
+
+            </div>
+
+        </section>
+    );
+};
+
+export default DecisionPanel;

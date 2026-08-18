@@ -1,0 +1,77 @@
+import React, { useState } from "react";
+import DocumentViewer from "./DocumentViewer";
+
+const DocumentPreview = ({ documents }) => {
+
+    const [selectedDocument, setSelectedDocument] = useState(null);
+
+    return (
+        <>
+            <section className="document-preview-card">
+
+                <div className="card-title">
+                    <h2>Document Preview</h2>
+                </div>
+
+                <div className="document-scroll-area">
+
+                    {documents.map((document) => (
+
+                        <div
+                            className="document-item"
+                            key={document.id}
+                        >
+
+                            <div className="document-thumbnail">
+
+                                {document.url ? (
+                                    <iframe
+                                        src={`${document.url}#toolbar=0&navpanes=0&scrollbar=0`}
+                                        title={document.fileName}
+                                    />
+                                ) : (
+                                    <div className="document-placeholder">
+                                        📄
+                                    </div>
+                                )}
+
+                            </div>
+
+                            <div className="document-info">
+
+                                <div>
+                                    <h3>{document.name}</h3>
+
+                                    <p>
+                                        {document.fileName}
+                                    </p>
+                                </div>
+
+                                <button
+                                    className="view-document-button"
+                                    onClick={() =>
+                                        setSelectedDocument(document)
+                                    }
+                                >
+                                    View Full Document
+                                </button>
+
+                            </div>
+
+                        </div>
+
+                    ))}
+
+                </div>
+
+            </section>
+
+            <DocumentViewer
+                document={selectedDocument}
+                onClose={() => setSelectedDocument(null)}
+            />
+        </>
+    );
+};
+
+export default DocumentPreview;

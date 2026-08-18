@@ -1,0 +1,123 @@
+.dashboard {
+    display: flex;
+    min-height: 100vh;
+    background: #0875c9;
+}
+
+
+/* =========================
+   SIDEBAR
+========================= */
+
+.sidebar {
+    width: 245px;
+    min-width: 245px;
+    background: #ffffff;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.08);
+}
+
+
+/* LOGO */
+
+.bank-logo {
+    height: 105px;
+    display: flex;
+    align-items: center;
+    padding: 20px 25px;
+    gap: 12px;
+}
+
+.logo-symbol {
+    width: 42px;
+    height: 42px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #0072c6;
+    color: white;
+    font-size: 25px;
+    font-weight: 700;
+}
+
+.logo-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.05;
+    color: #222;
+    font-size: 17px;
+}
+
+
+/* MENU */
+
+.sidebar-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 10px 10px;
+}
+
+.sidebar-item {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    min-height: 44px;
+    padding: 10px 14px;
+    border-radius: 7px;
+    color: #444;
+    font-size: 13px;
+    cursor: pointer;
+    transition: 0.2s ease;
+}
+
+.sidebar-item:hover {
+    background: #edf6fd;
+}
+
+.sidebar-item.active {
+    background: #0877c9;
+    color: white;
+}
+
+.sidebar-icon {
+    width: 20px;
+    text-align: center;
+    font-size: 16px;
+}
+
+
+/* LOGOUT */
+
+.logout-container {
+    margin-top: auto;
+    padding: 15px 10px 25px;
+}
+
+.logout-button {
+    width: 100%;
+    padding: 12px 14px;
+    background: white;
+    border: 1px solid #e0e5eb;
+    border-radius: 6px;
+    text-align: left;
+    color: #444;
+    cursor: pointer;
+}
+
+.logout-button span {
+    margin-right: 10px;
+}
+
+
+/* MAIN */
+
+.main-content {
+    flex: 1;
+    min-width: 0;
+    background: #0877c9;
+    padding: 18px 22px 30px;
+}

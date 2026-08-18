@@ -1,0 +1,177 @@
+import React, { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+
+import DashboardLayout from "../layouts/DashboardLayout";
+
+import ApplicationDetails from "../components/ApplicationDetails";
+import DocumentPreview from "../components/DocumentPreview";
+import DecisionPanel from "../components/DecisionPanel";
+import VerificationPanel from "../components/VerificationPanel";
+
+import {
+    getApplicationByCustomerId,
+    submitDecision,
+    runBureauCheck
+} from "../services/applicationService";
+
+const ApplicationDetailsPage = () => {
+
+    const { customerId } = useParams();
+
+    const [application, setApplication] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
+
+    useEffect(() => {
+
+        const loadApplication = async () => {
+
+            try {
+
+                setLoading(true);
+
+                const data =
+                    await getApplicationByCustomerId(customerId);
+
+                setApplication(data);
+
+            } catch (err) {
+
+                setError(err.message);
+
+            } finally {
+
+                setLoading(false);
+
+            }
+        };
+
+        loadApplication();
+
+    }, [customerId]);
+
+
+    const handleDecision = async (
+        applicationId,
+        decision
+    ) => {
+
+        try {
+
+            await submitDecision(
+                applicationId,
+                decision
+            );
+
+            console.log(
+                `Application ${applicationId} marked as ${decision}`
+            );
+
+        } catch (error) {
+
+            console.error(
+                "Decision submission failed",
+                error
+            );
+
+        }
+    };
+
+
+    const handleBureauCheck = async (
+        applicationId
+    ) => {
+
+        return await runBureauCheck(applicationId);
+
+    };
+
+
+    if (loading) {
+
+        return (
+            <DashboardLayout>
+
+                <div className="loading-container">
+                    Loading application...
+                </div>
+
+            </DashboardLayout>
+        );
+
+    }
+
+
+    if (error) {
+
+        return (
+            <DashboardLayout>
+
+                <div className="error-container">
+                    {error}
+                </div>
+
+            </DashboardLayout>
+        );
+
+    }
+
+
+    return (
+        <DashboardLayout>
+
+            <div className="application-page">
+
+                <div className="page-header">
+
+                    <div>
+                        <h1>Card Application Details</h1>
+                    </div>
+
+                </div>
+
+
+                <ApplicationDetails
+                    application={application}
+                />
+
+
+                <div className="bottom-grid">
+
+                    <DocumentPreview
+                        documents={application.documents}
+                    />
+
+
+                    <DecisionPanel
+                        applicationId={
+                            application.applicationId
+                        }
+                        onDecision={handleDecision}
+                    />
+
+
+                    <VerificationPanel
+                        applicationId={
+                            application.applicationId
+                        }
+                        initialScore={
+                            application.bureauScore
+                        }
+                        initialStatus={
+                            application.bureauStatus
+                        }
+                        onRunBureauCheck={
+                            handleBureauCheck
+                        }
+                    />
+
+                </div>
+
+            </div>
+
+        </DashboardLayout>
+    );
+};
+
+export default ApplicationDetailsPage;
