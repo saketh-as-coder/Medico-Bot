@@ -1,0 +1,29 @@
+export const getDocumentsFromLocalStorage = (applicationId) => {
+
+    const storedDocuments = localStorage.getItem(
+        `documents_${applicationId}`
+    );
+
+    if (!storedDocuments) {
+        return [];
+    }
+
+    try {
+        return JSON.parse(storedDocuments);
+    } catch (error) {
+        console.error("Unable to read documents", error);
+        return [];
+    }
+};
+
+
+export const saveDocumentsToLocalStorage = (
+    applicationId,
+    documents
+) => {
+
+    localStorage.setItem(
+        `documents_${applicationId}`,
+        JSON.stringify(documents)
+    );
+};

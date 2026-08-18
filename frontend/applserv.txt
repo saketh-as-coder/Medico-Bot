@@ -1,0 +1,105 @@
+const applications = {
+    "APP-B7C06194": {
+        applicationId: "APP-B7C06194",
+        applicantName: "SUKHDEV",
+        dateSubmitted: "Aug 17, 2026",
+        emailAddress: "sukhdev@example.com",
+        phoneNumber: "+91 9876543210",
+        panNumber: "ABCDE1234F",
+        occupation: "Salaried (Tech Corp India)",
+        annualIncome: "₹ 8,50,000",
+        address: "123 Tech Park, Sector 45, Gurugram, Haryana 122003",
+
+        bureauScore: 780,
+        bureauStatus: "Excellent",
+
+        documents: [
+            {
+                id: 1,
+                name: "Identity Proof",
+                fileName: "Aadhaar.pdf",
+                type: "PDF",
+                url: "/documents/Aadhaar.pdf"
+            },
+            {
+                id: 2,
+                name: "Address Proof",
+                fileName: "AddressProof.pdf",
+                type: "PDF",
+                url: "/documents/AddressProof.pdf"
+            },
+            {
+                id: 3,
+                name: "Income Proof",
+                fileName: "SalarySlip.pdf",
+                type: "PDF",
+                url: "/documents/SalarySlip.pdf"
+            }
+        ]
+    }
+};
+
+
+// Later replace this entire implementation with fetch/axios
+export const getApplicationByCustomerId = async (customerId) => {
+
+    return new Promise((resolve, reject) => {
+
+        setTimeout(() => {
+
+            const application = applications[customerId];
+
+            if (application) {
+                resolve(application);
+            } else {
+                reject(new Error("Application not found"));
+            }
+
+        }, 500);
+
+    });
+};
+
+
+// Later this will call Spring Boot
+export const submitDecision = async (applicationId, decision) => {
+
+    console.log("Decision submitted:", {
+        applicationId,
+        decision
+    });
+
+    return new Promise((resolve) => {
+
+        setTimeout(() => {
+
+            resolve({
+                success: true,
+                applicationId,
+                decision
+            });
+
+        }, 500);
+
+    });
+};
+
+
+// Later this will call the bureau API through Spring Boot
+export const runBureauCheck = async (applicationId) => {
+
+    console.log("Running bureau check for:", applicationId);
+
+    return new Promise((resolve) => {
+
+        setTimeout(() => {
+
+            resolve({
+                score: 780,
+                status: "Excellent"
+            });
+
+        }, 2000);
+
+    });
+};
