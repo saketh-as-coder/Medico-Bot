@@ -1,0 +1,346 @@
+package com.yourproject.service;
+
+import com.yourproject.dto.decision.*;
+import com.yourproject.entity.Application;
+import com.yourproject.entity.ApplicationOtp;
+import com.yourproject.entity.enums.ApplicationStatus;
+import com.yourproject.entity.enums.DecisionAction;
+import com.yourproject.exception.BadRequestException;
+import com.yourproject.exception.InvalidOtpException;
+import com.yourproject.exception.ResourceNotFoundException;
+import com.yourproject.repository.ApplicationOtpRepository;
+import com.yourproject.repository.ApplicationRepository;
+import jakarta.transaction.Transactional;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
+
+@Service
+public class ApplicationDecisionService {
+
+    private static final int OTP_VALIDITY_MINUTES = 5;
+    private static final int MAX_ATTEMPTS = 5;
+
+    private final ApplicationRepository applicationRepository;
+    private final ApplicationOtpRepository otpRepository;
+    private final OtpService otpService;
+
+    public ApplicationDecisionService(
+            ApplicationRepository applicationRepository,
+            ApplicationOtpRepository otpRepository,
+            OtpService otpService
+    ) {
+        this.applicationRepository = applicationRepository;
+        this.otpRepository = otpRepository;
+        this.otpService = otpService;
+    }
+
+    public ApplicationDecisionResponse getApplicationDecision(
+            Long applicationId
+    ) {
+
+        Application application =
+                getApplication(applicationId);
+
+        return new ApplicationDecisionResponse(
+                application.getId(),
+                application.getApplicationNumber(),
+                application.getCustomer().getName(),
+                application.getCustomer().getEmail(),
+                application.getStatus().name(),
+                application.getAppealRemark()
+        );
+    }
+
+    @Transactional
+    public DecisionOtpResponse requestOtp(
+            Long applicationId,
+            DecisionOtpRequest request
+    ) {
+
+        Application application =
+                getApplication(applicationId);
+
+        validateDecision(
+                application,
+                request.getAction()
+        );
+
+        if (request.getAction() == DecisionAction.APPEAL
+                && (request.getRemark() == null
+                || request.getRemark().trim().isEmpty())) {
+
+            throw new BadRequestException(
+                    "Appeal remark is required"
+            );
+        }
+
+        otpRepository
+                .findTopByApplicationIdAndUsedFalseOrderByCreatedAtDesc(
+                        applicationId
+                )
+                .ifPresent(existingOtp -> {
+                    existingOtp.setUsed(true);
+                    otpRepository.save(existingOtp);
+                });
+
+        String otp = otpService.generateOtp();
+
+        ApplicationOtp applicationOtp =
+                new ApplicationOtp();
+
+        applicationOtp.setApplication(application);
+        applicationOtp.setAction(request.getAction());
+        applicationOtp.setAppealRemark(request.getRemark());
+        applicationOtp.setOtpHash(
+                otpService.hashOtp(otp)
+        );
+        applicationOtp.setExpiresAt(
+                LocalDateTime.now()
+                        .plusMinutes(OTP_VALIDITY_MINUTES)
+        );
+        applicationOtp.setAttempts(0);
+        applicationOtp.setUsed(false);
+
+        otpRepository.save(applicationOtp);
+
+        String email =
+                application.getCustomer().getEmail();
+
+        otpService.sendOtp(email, otp);
+
+        return new DecisionOtpResponse(
+                "OTP sent successfully",
+                maskEmail(email),
+                OTP_VALIDITY_MINUTES * 60L
+        );
+    }
+
+    @Transactional
+    public DecisionOtpResponse resendOtp(
+            Long applicationId
+    ) {
+
+        ApplicationOtp existingOtp =
+                otpRepository
+                        .findTopByApplicationIdAndUsedFalseOrderByCreatedAtDesc(
+                                applicationId
+                        )
+                        .orElseThrow(() ->
+                                new BadRequestException(
+                                        "No active OTP found"
+                                )
+                        );
+
+        DecisionOtpRequest request =
+                new DecisionOtpRequest();
+
+        request.setAction(existingOtp.getAction());
+        request.setRemark(existingOtp.getAppealRemark());
+
+        existingOtp.setUsed(true);
+        otpRepository.save(existingOtp);
+
+        return requestOtp(
+                applicationId,
+                request
+        );
+    }
+
+    @Transactional
+    public DecisionResponse verifyOtp(
+            Long applicationId,
+            VerifyOtpRequest request
+    ) {
+
+        Application application =
+                getApplication(applicationId);
+
+        ApplicationOtp otp =
+                otpRepository
+                        .findTopByApplicationIdAndUsedFalseOrderByCreatedAtDesc(
+                                applicationId
+                        )
+                        .orElseThrow(() ->
+                                new InvalidOtpException(
+                                        "No active OTP found"
+                                )
+                        );
+
+        if (otp.getUsed()) {
+            throw new InvalidOtpException(
+                    "OTP has already been used"
+            );
+        }
+
+        if (LocalDateTime.now()
+                .isAfter(otp.getExpiresAt())) {
+
+            otp.setUsed(true);
+            otpRepository.save(otp);
+
+            throw new InvalidOtpException(
+                    "OTP has expired"
+            );
+        }
+
+        if (otp.getAttempts() >= MAX_ATTEMPTS) {
+
+            otp.setUsed(true);
+            otpRepository.save(otp);
+
+            throw new InvalidOtpException(
+                    "Maximum OTP attempts exceeded"
+            );
+        }
+
+        boolean valid =
+                otpService.matches(
+                        request.getOtp(),
+                        otp.getOtpHash()
+                );
+
+        if (!valid) {
+
+            otp.setAttempts(
+                    otp.getAttempts() + 1
+            );
+
+            otpRepository.save(otp);
+
+            throw new InvalidOtpException(
+                    "Invalid OTP"
+            );
+        }
+
+        executeDecision(
+                application,
+                otp
+        );
+
+        otp.setUsed(true);
+        otp.setVerifiedAt(
+                LocalDateTime.now()
+        );
+
+        otpRepository.save(otp);
+        applicationRepository.save(application);
+
+        return new DecisionResponse(
+                true,
+                application.getId(),
+                application.getStatus().name(),
+                application.getAppealRemark(),
+                getSuccessMessage(
+                        otp.getAction()
+                )
+        );
+    }
+
+    private void executeDecision(
+            Application application,
+            ApplicationOtp otp
+    ) {
+
+        switch (otp.getAction()) {
+
+            case ACCEPT -> {
+                application.setStatus(
+                        ApplicationStatus.ACCEPTED
+                );
+                application.setAppealRemark(null);
+            }
+
+            case REJECT -> {
+                application.setStatus(
+                        ApplicationStatus.REJECTED
+                );
+                application.setAppealRemark(null);
+            }
+
+            case APPEAL -> {
+                application.setStatus(
+                        ApplicationStatus.APPEALED
+                );
+                application.setAppealRemark(
+                        otp.getAppealRemark()
+                );
+            }
+        }
+    }
+
+    private void validateDecision(
+            Application application,
+            DecisionAction action
+    ) {
+
+        if (application.getStatus()
+                != ApplicationStatus.SUBMITTED) {
+
+            throw new BadRequestException(
+                    "Application is not eligible for a decision"
+            );
+        }
+
+        if (action == null) {
+
+            throw new BadRequestException(
+                    "Decision action is required"
+            );
+        }
+    }
+
+    private Application getApplication(
+            Long applicationId
+    ) {
+
+        return applicationRepository
+                .findById(applicationId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Application not found: "
+                                        + applicationId
+                        )
+                );
+    }
+
+    private String getSuccessMessage(
+            DecisionAction action
+    ) {
+
+        return switch (action) {
+
+            case ACCEPT ->
+                    "Application accepted successfully";
+
+            case REJECT ->
+                    "Application rejected successfully";
+
+            case APPEAL ->
+                    "Application appeal submitted successfully";
+        };
+    }
+
+    private String maskEmail(String email) {
+
+        if (email == null || !email.contains("@")) {
+            return email;
+        }
+
+        String[] parts = email.split("@");
+
+        String username = parts[0];
+
+        if (username.length() <= 2) {
+            return "*".repeat(username.length())
+                    + "@"
+                    + parts[1];
+        }
+
+        return username.charAt(0)
+                + "*".repeat(username.length() - 2)
+                + username.charAt(username.length() - 1)
+                + "@"
+                + parts[1];
+    }
+}

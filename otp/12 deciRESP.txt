@@ -1,0 +1,44 @@
+package com.yourproject.dto.decision;
+
+public class DecisionResponse {
+
+    private boolean success;
+    private Long applicationId;
+    private String status;
+    private String appealRemark;
+    private String message;
+
+    public DecisionResponse(
+            boolean success,
+            Long applicationId,
+            String status,
+            String appealRemark,
+            String message
+    ) {
+        this.success = success;
+        this.applicationId = applicationId;
+        this.status = status;
+        this.appealRemark = appealRemark;
+        this.message = message;
+    }
+
+    public boolean isSuccess() {
+        return success;
+    }
+
+    public Long getApplicationId() {
+        return applicationId;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public String getAppealRemark() {
+        return appealRemark;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+}

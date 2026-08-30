@@ -1,0 +1,76 @@
+package com.yourproject.controller;
+
+import com.yourproject.dto.decision.*;
+import com.yourproject.service.ApplicationDecisionService;
+import jakarta.validation.Valid;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/api/applications")
+public class ApplicationDecisionController {
+
+    private final ApplicationDecisionService decisionService;
+
+    public ApplicationDecisionController(
+            ApplicationDecisionService decisionService
+    ) {
+        this.decisionService = decisionService;
+    }
+
+    @GetMapping("/{applicationId}/decision")
+    public ResponseEntity<ApplicationDecisionResponse>
+    getApplicationDecision(
+            @PathVariable Long applicationId
+    ) {
+
+        return ResponseEntity.ok(
+                decisionService.getApplicationDecision(
+                        applicationId
+                )
+        );
+    }
+
+    @PostMapping("/{applicationId}/decision/otp")
+    public ResponseEntity<DecisionOtpResponse>
+    requestOtp(
+            @PathVariable Long applicationId,
+            @Valid @RequestBody DecisionOtpRequest request
+    ) {
+
+        return ResponseEntity.ok(
+                decisionService.requestOtp(
+                        applicationId,
+                        request
+                )
+        );
+    }
+
+    @PostMapping("/{applicationId}/decision/resend-otp")
+    public ResponseEntity<DecisionOtpResponse>
+    resendOtp(
+            @PathVariable Long applicationId
+    ) {
+
+        return ResponseEntity.ok(
+                decisionService.resendOtp(
+                        applicationId
+                )
+        );
+    }
+
+    @PostMapping("/{applicationId}/decision/verify")
+    public ResponseEntity<DecisionResponse>
+    verifyOtp(
+            @PathVariable Long applicationId,
+            @Valid @RequestBody VerifyOtpRequest request
+    ) {
+
+        return ResponseEntity.ok(
+                decisionService.verifyOtp(
+                        applicationId,
+                        request
+                )
+        );
+    }
+}

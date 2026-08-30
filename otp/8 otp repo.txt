@@ -1,0 +1,15 @@
+package com.yourproject.repository;
+
+import com.yourproject.entity.ApplicationOtp;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.Optional;
+
+public interface ApplicationOtpRepository
+        extends JpaRepository<ApplicationOtp, Long> {
+
+    Optional<ApplicationOtp>
+    findTopByApplicationIdAndUsedFalseOrderByCreatedAtDesc(
+            Long applicationId
+    );
+}

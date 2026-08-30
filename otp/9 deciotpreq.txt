@@ -1,0 +1,28 @@
+package com.yourproject.dto.decision;
+
+import com.yourproject.entity.enums.DecisionAction;
+import jakarta.validation.constraints.NotNull;
+
+public class DecisionOtpRequest {
+
+    @NotNull
+    private DecisionAction action;
+
+    private String remark;
+
+    public DecisionAction getAction() {
+        return action;
+    }
+
+    public void setAction(DecisionAction action) {
+        this.action = action;
+    }
+
+    public String getRemark() {
+        return remark;
+    }
+
+    public void setRemark(String remark) {
+        this.remark = remark;
+    }
+}
